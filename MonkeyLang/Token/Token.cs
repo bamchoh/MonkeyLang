@@ -13,6 +13,11 @@ namespace MonkeyLang.Token
         {
             { "fn", TokenTypes.FUNCTION },
             { "let", TokenTypes.LET },
+            { "true", TokenTypes.TRUE },
+            { "false", TokenTypes.FALSE },
+            { "if", TokenTypes.IF },
+            { "else", TokenTypes.ELSE },
+            { "return", TokenTypes.RETURN },
         };
 
         public static string LookupIdent(string ident)
@@ -36,6 +41,13 @@ namespace MonkeyLang.Token
 
         public static string ASSIGN = "=";
         public static string PLUS = "+";
+        public static string MINUS = "-";
+        public static string BANG = "!";
+        public static string ASTERISK = "*";
+        public static string SLASH = "/";
+
+        public static string LT = "<";
+        public static string GT = ">";
 
         public static string COMMA = ",";
         public static string SEMICOLON = ";";
@@ -47,5 +59,13 @@ namespace MonkeyLang.Token
 
         public static string FUNCTION = "FUNCTION";
         public static string LET = "LET";
+        public static string TRUE = "TRUE";
+        public static string FALSE = "FALSE";
+        public static string IF = "IF";
+        public static string ELSE = "ELSE";
+        public static string RETURN = "RETURN";
+
+        public static string EQ = "==";
+        public static string NOT_EQ = "!=";
     }
 }

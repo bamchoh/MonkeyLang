@@ -31,6 +31,17 @@ let add = fn(x, y) {
 };
 
 let result = add(five, ten);
+!-/*5;
+5 < 10 > 5;
+
+if (5 < 10) {
+    return true;
+} else {
+    return false;
+}
+
+10 == 10;
+10 != 9;
 ";
 
             var tests = new List<ep>()
@@ -70,6 +81,43 @@ let result = add(five, ten);
                 new ep(TokenTypes.COMMA, ","),
                 new ep(TokenTypes.IDENT, "ten"),
                 new ep(TokenTypes.RPAREN, ")"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.BANG, "!"),
+                new ep(TokenTypes.MINUS, "-"),
+                new ep(TokenTypes.SLASH, "/"),
+                new ep(TokenTypes.ASTERISK, "*"),
+                new ep(TokenTypes.INT, "5"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.INT, "5"),
+                new ep(TokenTypes.LT, "<"),
+                new ep(TokenTypes.INT, "10"),
+                new ep(TokenTypes.GT, ">"),
+                new ep(TokenTypes.INT, "5"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.IF, "if"),
+                new ep(TokenTypes.LPAREN, "("),
+                new ep(TokenTypes.INT, "5"),
+                new ep(TokenTypes.LT, "<"),
+                new ep(TokenTypes.INT, "10"),
+                new ep(TokenTypes.RPAREN, ")"),
+                new ep(TokenTypes.LBRACE, "{"),
+                new ep(TokenTypes.RETURN, "return"),
+                new ep(TokenTypes.TRUE, "true"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.RBRACE, "}"),
+                new ep(TokenTypes.ELSE, "else"),
+                new ep(TokenTypes.LBRACE, "{"),
+                new ep(TokenTypes.RETURN, "return"),
+                new ep(TokenTypes.FALSE, "false"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.RBRACE, "}"),
+                new ep(TokenTypes.INT, "10"),
+                new ep(TokenTypes.EQ, "=="),
+                new ep(TokenTypes.INT, "10"),
+                new ep(TokenTypes.SEMICOLON, ";"),
+                new ep(TokenTypes.INT, "10"),
+                new ep(TokenTypes.NOT_EQ, "!="),
+                new ep(TokenTypes.INT, "9"),
                 new ep(TokenTypes.SEMICOLON, ";"),
                 new ep(TokenTypes.EOF, ""),
             };

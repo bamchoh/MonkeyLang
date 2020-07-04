@@ -26,7 +26,56 @@ namespace MonkeyLang.Lexer
 
             switch(ch) {
                 case '=':
-                    tok = newToken(TokenTypes.ASSIGN, ch);
+                    if(peekChar() == '=')
+                    {
+                        var c = ch;
+                        readChar();
+                        var literal = c.ToString() + ch.ToString();
+                        tok = new Token.Token()
+                        {
+                            Type = TokenTypes.EQ,
+                            Literal = literal,
+                        };
+                    }
+                    else
+                    {
+                        tok = newToken(TokenTypes.ASSIGN, ch);
+                    }
+                    break;
+                case '+':
+                    tok = newToken(TokenTypes.PLUS, ch);
+                    break;
+                case '-':
+                    tok = newToken(TokenTypes.MINUS, ch);
+                    break;
+                case '!':
+                    if(peekChar() == '=')
+                    {
+                        var c = ch;
+                        readChar();
+                        var literal = c.ToString() + ch.ToString();
+                        tok = new Token.Token()
+                        {
+                            Type = TokenTypes.NOT_EQ,
+                            Literal = literal,
+                        };
+                    }
+                    else
+                    {
+                        tok = newToken(TokenTypes.BANG, ch);
+                    }
+                    break;
+                case '/':
+                    tok = newToken(TokenTypes.SLASH, ch);
+                    break;
+                case '*':
+                    tok = newToken(TokenTypes.ASTERISK, ch);
+                    break;
+                case '<':
+                    tok = newToken(TokenTypes.LT, ch);
+                    break;
+                case '>':
+                    tok = newToken(TokenTypes.GT, ch);
                     break;
                 case ';':
                     tok = newToken(TokenTypes.SEMICOLON, ch);
@@ -39,9 +88,6 @@ namespace MonkeyLang.Lexer
                     break;
                 case ',':
                     tok = newToken(TokenTypes.COMMA, ch);
-                    break;
-                case '+':
-                    tok = newToken(TokenTypes.PLUS, ch);
                     break;
                 case '{':
                     tok = newToken(TokenTypes.LBRACE, ch);
@@ -136,6 +182,18 @@ namespace MonkeyLang.Lexer
             }
             position = readPosition;
             readPosition++;
+        }
+
+        private char peekChar()
+        {
+            if(readPosition >= input.Length)
+            {
+                return '\0';
+            }
+            else
+            {
+                return input[readPosition];
+            }
         }
     }
 }
