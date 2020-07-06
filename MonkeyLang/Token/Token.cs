@@ -33,39 +33,39 @@ namespace MonkeyLang.Token
 
     public static class TokenTypes
     {
-        public static string ILLEGAL = "ILLEGAL";
-        public static string EOF = "EOF";
+        public const string ILLEGAL = "ILLEGAL";
+        public const string EOF = "EOF";
 
-        public static string IDENT = "IDENT";
-        public static string INT = "INT";
+        public const string IDENT = "IDENT";
+        public const string INT = "INT";
 
-        public static string ASSIGN = "=";
-        public static string PLUS = "+";
-        public static string MINUS = "-";
-        public static string BANG = "!";
-        public static string ASTERISK = "*";
-        public static string SLASH = "/";
+        public const string ASSIGN = "=";
+        public const string PLUS = "+";
+        public const string MINUS = "-";
+        public const string BANG = "!";
+        public const string ASTERISK = "*";
+        public const string SLASH = "/";
 
-        public static string LT = "<";
-        public static string GT = ">";
+        public const string LT = "<";
+        public const string GT = ">";
 
-        public static string COMMA = ",";
-        public static string SEMICOLON = ";";
+        public const string COMMA = ",";
+        public const string SEMICOLON = ";";
 
-        public static string LPAREN = "(";
-        public static string RPAREN = ")";
-        public static string LBRACE = "{";
-        public static string RBRACE = "}";
+        public const string LPAREN = "(";
+        public const string RPAREN = ")";
+        public const string LBRACE = "{";
+        public const string RBRACE = "}";
 
-        public static string FUNCTION = "FUNCTION";
-        public static string LET = "LET";
-        public static string TRUE = "TRUE";
-        public static string FALSE = "FALSE";
-        public static string IF = "IF";
-        public static string ELSE = "ELSE";
-        public static string RETURN = "RETURN";
+        public const string FUNCTION = "FUNCTION";
+        public const string LET = "LET";
+        public const string TRUE = "TRUE";
+        public const string FALSE = "FALSE";
+        public const string IF = "IF";
+        public const string ELSE = "ELSE";
+        public const string RETURN = "RETURN";
 
-        public static string EQ = "==";
-        public static string NOT_EQ = "!=";
+        public const string EQ = "==";
+        public const string NOT_EQ = "!=";
     }
 }
