@@ -3,6 +3,7 @@ using MonkeyLang.Token;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Channels;
 
 namespace MonkeyLang.Parser
 {
@@ -32,8 +33,13 @@ namespace MonkeyLang.Parser
             nextToken();
             nextToken();
             errors = new List<string>();
+
             prefixParseFns = new Dictionary<string, Func<Expression>>();
             registerPrefix(TokenTypes.IDENT, parseIdentifier);
+            registerPrefix(TokenTypes.INT, parseIntegerLiteral);
+            registerPrefix(TokenTypes.BANG, parsePrefixExpression);
+            registerPrefix(TokenTypes.MINUS, parsePrefixExpression);
+
             infixParseFns = new Dictionary<string, Func<Expression, Expression>>();
         }
 
@@ -136,14 +142,48 @@ namespace MonkeyLang.Parser
 
         private Ast.Expression parseExpression(PrecedenceType i)
         {
-            var prefix = prefixParseFns[curToken.Type];
-            if(prefix == null)
+            Func<Expression> prefix;
+            var ok = prefixParseFns.TryGetValue(curToken.Type, out prefix);
+            if(!ok)
             {
+                noPrefixParseFnError(curToken.Type);
                 return null;
             }
             var lestExp = prefix();
 
             return lestExp;
+        }
+
+        private Ast.Expression parseIntegerLiteral()
+        {
+            var lit = new Ast.IntegerLiteral() { Token = curToken };
+            Int64 value;
+            var err = Int64.TryParse(curToken.Literal, out value);
+            if(!err)
+            {
+                var msg = string.Format("could not parse {0} as integer", curToken.Literal);
+                errors.Add(msg);
+                return null;
+            }
+
+            lit.Value = value;
+
+            return lit;
+        }
+
+        private Ast.Expression parsePrefixExpression()
+        {
+            var expression = new PrefixExpression()
+            {
+                Token = curToken,
+                Operator = curToken.Literal,
+            };
+
+            nextToken();
+
+            expression.Right = parseExpression(PrecedenceType.PREFIX);
+
+            return expression;
         }
 
         private bool curTokenIs(string t)
@@ -187,6 +227,12 @@ namespace MonkeyLang.Parser
                 Token = curToken,
                 Value = curToken.Literal,
             };
+        }
+
+        private void noPrefixParseFnError(string t)
+        {
+            var msg = string.Format("no prefix parse function for {0} found", t);
+            errors.Add(msg);
         }
     }
 }

@@ -143,4 +143,44 @@ namespace MonkeyLang.Ast
             return "";
         }
     }
+
+    public class IntegerLiteral : Expression
+    {
+        public Token.Token Token;
+        public Int64 Value;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            return Token.Literal;
+        }
+    }
+
+    public class PrefixExpression : Expression
+    {
+        public Token.Token Token;
+        public string Operator;
+        public Expression Right;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var ms = new MemoryStream();
+
+            ms.Write(Encoding.UTF8.GetBytes("("));
+            ms.Write(Encoding.UTF8.GetBytes(Operator));
+            ms.Write(Encoding.UTF8.GetBytes(Right.String()));
+            ms.Write(Encoding.UTF8.GetBytes(")"));
+
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+    }
 }

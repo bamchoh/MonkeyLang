@@ -6,6 +6,7 @@ using MonkeyLang.Parser;
 using System.Collections.Generic;
 using System.Threading;
 using System;
+using System.Net;
 
 namespace MonkeyLangTest
 {
@@ -103,6 +104,85 @@ return 993322;
             Assert.AreEqual(ident.Value, "foobar", string.Format("ident.Value not {0}. got={1}", "foobar", ident.Value));
 
             Assert.AreEqual(ident.TokenLiteral(), "foobar", string.Format("ident.TokenLiteral not {0}. got={1}", "foobar", ident.TokenLiteral()));
+        }
+
+        [TestMethod]
+        public void TestIntegerLiteralExpression()
+        {
+            var input = @"5;";
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1,
+                string.Format("program has not enough statements. got={0}", program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format("program.Statements[0] is not Ast.ExpressionStatement. got={0}",
+                program.Statements[0].GetType().ToString()));
+
+            var literal = (IntegerLiteral)stmt.Expression;
+
+            Assert.IsNotNull(literal, string.Format("exp not Ast.IntegerLiteral. got={0}", stmt.Expression));
+
+            Assert.AreEqual(literal.Value, 5, string.Format("literal.Value not {0}. got={1}", 5, literal.Value));
+
+            Assert.AreEqual(literal.TokenLiteral(), "5", string.Format("literal.TokenLiteral not {0}. got={1}", "5", literal.TokenLiteral()));
+        }
+
+        public class prefixExpressionTestExpectedParams
+        {
+            public string Input { get; set; }
+            public string Operator { get; set; }
+            public Int64 IntegerValue { get; set; }
+        }
+
+        [DataRow("!5", "!", 5)]
+        [DataRow("-15", "-", 15)]
+        [DataTestMethod]
+        public void TestParsingPrefixExpression(string input, string oper, Int64 integerValue)
+        {
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1,
+                string.Format("program.Statements does not contain {0} statements. got={1}",
+                1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format("program.Statements[0] is not Ast.ExpressionStatement. got={0}",
+                program.Statements[0]));
+
+            var exp = (PrefixExpression)stmt.Expression;
+
+            Assert.IsNotNull(exp, string.Format("stmt is not Ast.PrefixExpression. got={0}", stmt.Expression));
+
+            Assert.AreEqual(exp.Operator, oper, string.Format("exp.Operator is not '{0}'. got={1}", oper, exp.Operator));
+
+            if(!testIntegerLiteral(exp.Right, integerValue))
+            {
+                return;
+            }
+        }
+
+        private bool testIntegerLiteral(Expression il, Int64 value)
+        {
+            var integ = (IntegerLiteral)il;
+
+            Assert.IsNotNull(integ, string.Format("il not Ast.IntegerLiteral. got={0}", il));
+
+            Assert.AreEqual(integ.Value, value, string.Format("integ.Value not {0}. got={1}", value, integ.Value));
+
+            Assert.AreEqual(integ.TokenLiteral(), string.Format("{0}", value),
+                string.Format("integ.TokenLiteral not {0}. got={1}", value, integ.TokenLiteral()));
+
+            return true;
         }
 
         private void testLetStatement(Statement s, string name)
