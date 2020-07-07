@@ -2,6 +2,8 @@
 using MonkeyLang.Token;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
 
@@ -27,6 +29,18 @@ namespace MonkeyLang.Parser
             CALL,
         }
 
+        Dictionary<string, PrecedenceType> precedences = new Dictionary<string, PrecedenceType>()
+        {
+            { TokenTypes.EQ, PrecedenceType.EQUALS },
+            { TokenTypes.NOT_EQ, PrecedenceType.EQUALS },
+            { TokenTypes.LT, PrecedenceType.LESSGREATER },
+            { TokenTypes.GT, PrecedenceType.LESSGREATER },
+            { TokenTypes.PLUS, PrecedenceType.SUM },
+            { TokenTypes.MINUS, PrecedenceType.SUM },
+            { TokenTypes.SLASH, PrecedenceType.PRODUCT },
+            { TokenTypes.ASTERISK, PrecedenceType.PRODUCT },
+        };
+
         public Parser(Lexer.Lexer l)
         {
             this.l = l;
@@ -41,6 +55,14 @@ namespace MonkeyLang.Parser
             registerPrefix(TokenTypes.MINUS, parsePrefixExpression);
 
             infixParseFns = new Dictionary<string, Func<Expression, Expression>>();
+            registerInfix(TokenTypes.PLUS, parseInfixExpression);
+            registerInfix(TokenTypes.MINUS, parseInfixExpression);
+            registerInfix(TokenTypes.SLASH, parseInfixExpression);
+            registerInfix(TokenTypes.ASTERISK, parseInfixExpression);
+            registerInfix(TokenTypes.EQ, parseInfixExpression);
+            registerInfix(TokenTypes.NOT_EQ, parseInfixExpression);
+            registerInfix(TokenTypes.LT, parseInfixExpression);
+            registerInfix(TokenTypes.GT, parseInfixExpression);
         }
 
         public List<string> Errors()
@@ -52,6 +74,26 @@ namespace MonkeyLang.Parser
         {
             var msg = string.Format("expected next token to be {0}, got {1} instead", t, peekToken.Type);
             errors.Add(msg);
+        }
+
+        private PrecedenceType peekPrecedence()
+        {
+            PrecedenceType p;
+            var ok = precedences.TryGetValue(peekToken.Type, out p);
+            if (ok)
+                return p;
+
+            return PrecedenceType.LOWEST;
+        }
+
+        private PrecedenceType curPrecedence()
+        {
+            PrecedenceType p;
+            var ok = precedences.TryGetValue(curToken.Type, out p);
+            if (ok)
+                return p;
+
+            return PrecedenceType.LOWEST;
         }
 
         public Ast.Program ParserProgram()
@@ -140,7 +182,7 @@ namespace MonkeyLang.Parser
             return stmt;
         }
 
-        private Ast.Expression parseExpression(PrecedenceType i)
+        private Ast.Expression parseExpression(PrecedenceType precedence)
         {
             Func<Expression> prefix;
             var ok = prefixParseFns.TryGetValue(curToken.Type, out prefix);
@@ -149,9 +191,23 @@ namespace MonkeyLang.Parser
                 noPrefixParseFnError(curToken.Type);
                 return null;
             }
-            var lestExp = prefix();
+            var leftExp = prefix();
 
-            return lestExp;
+            while(!peekTokenIs(TokenTypes.SEMICOLON) && precedence < peekPrecedence())
+            {
+                Func<Expression, Expression> infix;
+                ok = infixParseFns.TryGetValue(peekToken.Type, out infix);
+                if(!ok)
+                {
+                    return leftExp;
+                }
+
+                nextToken();
+
+                leftExp = infix(leftExp);
+            }
+
+            return leftExp;
         }
 
         private Ast.Expression parseIntegerLiteral()
@@ -233,6 +289,22 @@ namespace MonkeyLang.Parser
         {
             var msg = string.Format("no prefix parse function for {0} found", t);
             errors.Add(msg);
+        }
+
+        private Ast.Expression parseInfixExpression(Ast.Expression left)
+        {
+            var expression = new Ast.InfixExpression()
+            {
+                Token = curToken,
+                Operator = curToken.Literal,
+                Left = left,
+            };
+
+            var precedence = curPrecedence();
+            nextToken();
+            expression.Right = parseExpression(precedence);
+
+            return expression;
         }
     }
 }

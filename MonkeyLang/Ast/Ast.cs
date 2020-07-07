@@ -39,14 +39,16 @@ namespace MonkeyLang.Ast
 
         public string String()
         {
-            var ms = new MemoryStream();
+            var buf = new Utilities.StringBuffer();
 
             foreach(var s in Statements)
             {
-                ms.Write(Encoding.UTF8.GetBytes(s.String()));
+                buf.Write(s.String());
             }
 
-            return Encoding.UTF8.GetString(ms.ToArray());
+            var ss = buf.String();
+
+            return ss;
         }
     }
 
@@ -63,20 +65,20 @@ namespace MonkeyLang.Ast
 
         public string String()
         {
-            var ms = new MemoryStream();
+            var buf = new Utilities.StringBuffer();
 
-            ms.Write(Encoding.UTF8.GetBytes(Token.Literal + " "));
-            ms.Write(Encoding.UTF8.GetBytes(Name.String()));
-            ms.Write(Encoding.UTF8.GetBytes(" = "));
+            buf.Write(Token.Literal + " ");
+            buf.Write(Name.String());
+            buf.Write(" = ");
 
             if(Value != null)
             {
-                ms.Write(Encoding.UTF8.GetBytes(Value.String()));
+                buf.Write(Value.String());
             }
 
-            ms.Write(Encoding.UTF8.GetBytes(";"));
+            buf.Write(";");
 
-            return Encoding.UTF8.GetString(ms.ToArray());
+            return buf.String();
         }
     }
 
@@ -108,18 +110,18 @@ namespace MonkeyLang.Ast
 
         public string String()
         {
-            var ms = new MemoryStream();
+            var buf = new Utilities.StringBuffer();
 
-            ms.Write(Encoding.UTF8.GetBytes(TokenLiteral() + " "));
+            buf.Write(TokenLiteral() + " ");
 
             if(ReturnValue != null)
             {
-                ms.Write(Encoding.UTF8.GetBytes(ReturnValue.String()));
+                buf.Write(ReturnValue.String());
             }
 
-            ms.Write(Encoding.UTF8.GetBytes(";"));
+            buf.Write(";");
 
-            return Encoding.UTF8.GetString(ms.ToArray());
+            return buf.String();
         }
     }
 
@@ -173,14 +175,40 @@ namespace MonkeyLang.Ast
 
         public string String()
         {
-            var ms = new MemoryStream();
+            var buf = new Utilities.StringBuffer();
 
-            ms.Write(Encoding.UTF8.GetBytes("("));
-            ms.Write(Encoding.UTF8.GetBytes(Operator));
-            ms.Write(Encoding.UTF8.GetBytes(Right.String()));
-            ms.Write(Encoding.UTF8.GetBytes(")"));
+            buf.Write("(");
+            buf.Write(Operator);
+            buf.Write(Right.String());
+            buf.Write(")");
 
-            return Encoding.UTF8.GetString(ms.ToArray());
+            return buf.String();
+        }
+    }
+
+    public class InfixExpression : Expression
+    {
+        public Token.Token Token;
+        public Expression Left;
+        public string Operator;
+        public Expression Right;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var buf = new Utilities.StringBuffer();
+
+            buf.Write("(");
+            buf.Write(Left.String());
+            buf.Write(" " + Operator + " ");
+            buf.Write(Right.String());
+            buf.Write(")");
+
+            return buf.String(); ;
         }
     }
 }

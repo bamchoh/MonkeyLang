@@ -83,11 +83,10 @@ return 993322;
             }
         }
 
-        [TestMethod]
-        public void TestIdentifierExpression()
+        [DataRow(@"foobar;", "foobar")]
+        [DataTestMethod]
+        public void TestIdentifierExpression(string input, string value)
         {
-            string input = @"foobar;";
-
             var l = new Lexer(input);
             var p = new Parser(l);
             var program = p.ParserProgram();
@@ -101,16 +100,15 @@ return 993322;
             var ident = (Identifier)stmt.Expression;
             Assert.IsNotNull(ident, string.Format("exp not Ast.Identifier. got={0}", stmt.Expression));
 
-            Assert.AreEqual(ident.Value, "foobar", string.Format("ident.Value not {0}. got={1}", "foobar", ident.Value));
+            Assert.AreEqual(ident.Value, value, string.Format("ident.Value not {0}. got={1}", value, ident.Value));
 
-            Assert.AreEqual(ident.TokenLiteral(), "foobar", string.Format("ident.TokenLiteral not {0}. got={1}", "foobar", ident.TokenLiteral()));
+            Assert.AreEqual(ident.TokenLiteral(), value, string.Format("ident.TokenLiteral not {0}. got={1}", value, ident.TokenLiteral()));
         }
 
-        [TestMethod]
-        public void TestIntegerLiteralExpression()
+        [DataRow(@"5;", 5, "5")]
+        [DataTestMethod]
+        public void TestIntegerLiteralExpression(string input, Int64 expVal, string expLit)
         {
-            var input = @"5;";
-
             var l = new Lexer(input);
             var p = new Parser(l);
             var program = p.ParserProgram();
@@ -128,9 +126,9 @@ return 993322;
 
             Assert.IsNotNull(literal, string.Format("exp not Ast.IntegerLiteral. got={0}", stmt.Expression));
 
-            Assert.AreEqual(literal.Value, 5, string.Format("literal.Value not {0}. got={1}", 5, literal.Value));
+            Assert.AreEqual(literal.Value, expVal, string.Format("literal.Value not {0}. got={1}", expVal, literal.Value));
 
-            Assert.AreEqual(literal.TokenLiteral(), "5", string.Format("literal.TokenLiteral not {0}. got={1}", "5", literal.TokenLiteral()));
+            Assert.AreEqual(literal.TokenLiteral(), expLit, string.Format("literal.TokenLiteral not {0}. got={1}", expLit, literal.TokenLiteral()));
         }
 
         public class prefixExpressionTestExpectedParams
@@ -169,6 +167,72 @@ return 993322;
             {
                 return;
             }
+        }
+
+        [DataRow("5 + 5;", 5, "+", 5)]
+        [DataRow("5 - 5;", 5, "-", 5)]
+        [DataRow("5 * 5;", 5, "*", 5)]
+        [DataRow("5 / 5;", 5, "/", 5)]
+        [DataRow("5 > 5;", 5, ">", 5)]
+        [DataRow("5 < 5;", 5, "<", 5)]
+        [DataRow("5 == 5;", 5, "==", 5)]
+        [DataRow("5 != 5;", 5, "!=", 5)]
+        [DataTestMethod]
+        public void TestParsingInfixPrefixExpression(string input, Int64 leftValue, string oper, Int64 rightValue)
+        {
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1,
+                string.Format("program.Statements does not contain {0} statements. got={1}",
+                1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format("program.Statements[0] is not Ast.ExpressionStatement. got={0}",
+                program.Statements[0]));
+
+            var exp = (InfixExpression)stmt.Expression;
+
+            Assert.IsNotNull(exp, string.Format("stmt is not Ast.InfixExpression. got={0}", stmt.Expression));
+
+            if (!testIntegerLiteral(exp.Right, leftValue))
+            {
+                return;
+            }
+
+            Assert.AreEqual(exp.Operator, oper, string.Format("exp.Operator is not '{0}'. got={1}", oper, exp.Operator));
+
+            if (!testIntegerLiteral(exp.Right, rightValue))
+            {
+                return;
+            }
+        }
+
+        [DataRow("-a * b", "((-a) * b)")]
+        [DataRow("!-a", "(!(-a))")]
+        [DataRow("a + b + c", "((a + b) + c)")]
+        [DataRow("a + b - c", "((a + b) - c)")]
+        [DataRow("a * b * c", "((a * b) * c)")]
+        [DataRow("a * b / c", "((a * b) / c)")]
+        [DataRow("a + b / c", "(a + (b / c))")]
+        [DataRow("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)")]
+        [DataRow("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)")]
+        [DataRow("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))")]
+        [DataRow("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))")]
+        [DataRow("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")]
+        [DataTestMethod]
+        public void TestOperatorPrecedenceParsing(string input, string expected)
+        {
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            var actual = program.String();
+            Assert.AreEqual(actual, expected, string.Format("expected={0}, got={1}", expected, actual));
         }
 
         private bool testIntegerLiteral(Expression il, Int64 value)
