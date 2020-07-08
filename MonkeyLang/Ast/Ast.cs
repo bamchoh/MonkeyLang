@@ -211,4 +211,20 @@ namespace MonkeyLang.Ast
             return buf.String(); ;
         }
     }
+
+    public class Boolean : Expression
+    {
+        public Token.Token Token;
+        public bool Value;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            return Token.Literal;
+        }
+    }
 }

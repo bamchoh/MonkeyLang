@@ -53,6 +53,8 @@ namespace MonkeyLang.Parser
             registerPrefix(TokenTypes.INT, parseIntegerLiteral);
             registerPrefix(TokenTypes.BANG, parsePrefixExpression);
             registerPrefix(TokenTypes.MINUS, parsePrefixExpression);
+            registerPrefix(TokenTypes.TRUE, parseBoolean);
+            registerPrefix(TokenTypes.FALSE, parseBoolean);
 
             infixParseFns = new Dictionary<string, Func<Expression, Expression>>();
             registerInfix(TokenTypes.PLUS, parseInfixExpression);
@@ -305,6 +307,11 @@ namespace MonkeyLang.Parser
             expression.Right = parseExpression(precedence);
 
             return expression;
+        }
+
+        private Ast.Expression parseBoolean()
+        {
+            return new Ast.Boolean() { Token = curToken, Value = curTokenIs(TokenTypes.TRUE) };
         }
     }
 }

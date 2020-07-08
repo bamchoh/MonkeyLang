@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MonkeyLang;
 using MonkeyLang.Token;
 using MonkeyLang.Ast;
 using MonkeyLang.Lexer;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 using System.Net;
+using System.Linq.Expressions;
 
 namespace MonkeyLangTest
 {
@@ -177,8 +179,11 @@ return 993322;
         [DataRow("5 < 5;", 5, "<", 5)]
         [DataRow("5 == 5;", 5, "==", 5)]
         [DataRow("5 != 5;", 5, "!=", 5)]
+        [DataRow("true == true", true, "==", true)]
+        [DataRow("true != false", true, "!=", false)]
+        [DataRow("false == false", false, "==", false)]
         [DataTestMethod]
-        public void TestParsingInfixPrefixExpression(string input, Int64 leftValue, string oper, Int64 rightValue)
+        public void TestParsingInfixPrefixExpression(string input, object leftValue, string oper, object rightValue)
         {
             var l = new Lexer(input);
             var p = new Parser(l);
@@ -194,18 +199,7 @@ return 993322;
             Assert.IsNotNull(stmt, string.Format("program.Statements[0] is not Ast.ExpressionStatement. got={0}",
                 program.Statements[0]));
 
-            var exp = (InfixExpression)stmt.Expression;
-
-            Assert.IsNotNull(exp, string.Format("stmt is not Ast.InfixExpression. got={0}", stmt.Expression));
-
-            if (!testIntegerLiteral(exp.Right, leftValue))
-            {
-                return;
-            }
-
-            Assert.AreEqual(exp.Operator, oper, string.Format("exp.Operator is not '{0}'. got={1}", oper, exp.Operator));
-
-            if (!testIntegerLiteral(exp.Right, rightValue))
+            if(!testInfixExpression(stmt.Expression, leftValue, oper, rightValue))
             {
                 return;
             }
@@ -223,6 +217,10 @@ return 993322;
         [DataRow("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))")]
         [DataRow("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))")]
         [DataRow("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")]
+        [DataRow("true", "true")]
+        [DataRow("false", "false")]
+        [DataRow("3 > 5 == false", "((3 > 5) == false)")]
+        [DataRow("3 < 5 == true", "((3 < 5) == true)")]
         [DataTestMethod]
         public void TestOperatorPrecedenceParsing(string input, string expected)
         {
@@ -235,7 +233,82 @@ return 993322;
             Assert.AreEqual(actual, expected, string.Format("expected={0}, got={1}", expected, actual));
         }
 
-        private bool testIntegerLiteral(Expression il, Int64 value)
+        private bool testIdentifier(MonkeyLang.Ast.Expression exp, string value)
+        {
+            var ident = (Identifier)exp;
+
+            Assert.IsNotNull(ident, string.Format(
+                "exp not Ast.Identifier. got={0}", exp.GetType().ToString()));
+
+            Assert.AreEqual(ident.Value, value, string.Format(
+                "ident.Value not {0}. got={1}", value, ident.Value));
+
+            Assert.AreEqual(ident.TokenLiteral(), value, string.Format(
+                "ident.TokenLiteral not {0}. got={1}", value, ident.TokenLiteral()));
+
+            return true;
+        }
+
+        private bool testInfixExpression(MonkeyLang.Ast.Expression exp, object left, string oper, object right)
+        {
+            var opExp = (InfixExpression)exp;
+
+            Assert.IsNotNull(opExp, string.Format(
+                "exp is not Ast.InfixExpression. got={0}({1})", exp, exp.GetType().ToString()));
+
+            if(!testLiteralExpression(opExp.Left, left))
+            {
+                return false;
+            }
+
+            Assert.AreEqual(opExp.Operator, oper, string.Format(
+                "exp.Operator is not '{0}'. got={1}", oper, opExp.Operator));
+
+            if(!testLiteralExpression(opExp.Right, right))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool testLiteralExpression(MonkeyLang.Ast.Expression exp, object expected)
+        {
+            var v = expected.GetType();
+            if(v == typeof(int))
+                return testIntegerLiteral(exp, Convert.ToInt64(expected));
+
+            if (v == typeof(Int64))
+                return testIntegerLiteral(exp, Convert.ToInt64(expected));
+
+            if (v == typeof(string))
+                return testIdentifier(exp, (string)expected);
+
+            if (v == typeof(bool))
+                return testBooleanLiteral(exp, (bool)expected);
+
+            Assert.Fail(string.Format("type of exp not handled. got={0}", exp));
+
+            return false;
+        }
+
+        private bool testBooleanLiteral(MonkeyLang.Ast.Expression exp, bool value)
+        {
+            var bo = (MonkeyLang.Ast.Boolean)exp;
+
+            Assert.IsNotNull(bo, string.Format(
+                "exp not Ast.Boolean. got={0}", exp));
+
+            Assert.AreEqual(bo.Value, value, string.Format(
+                "bo.Value not {0}. got={1}", value, bo.Value));
+
+            Assert.AreEqual(bo.TokenLiteral(), string.Format("{0}", value.ToString().ToLower()), string.Format(
+                "bo.TokenLiteral not {0}. got={1}", value, bo.TokenLiteral()));
+
+            return true;
+        }
+
+        private bool testIntegerLiteral(MonkeyLang.Ast.Expression il, Int64 value)
         {
             var integ = (IntegerLiteral)il;
 
