@@ -55,6 +55,8 @@ namespace MonkeyLang.Parser
             registerPrefix(TokenTypes.MINUS, parsePrefixExpression);
             registerPrefix(TokenTypes.TRUE, parseBoolean);
             registerPrefix(TokenTypes.FALSE, parseBoolean);
+            registerPrefix(TokenTypes.LPAREN, parseGroupedExpression);
+            registerPrefix(TokenTypes.IF, parseIfExpression);
 
             infixParseFns = new Dictionary<string, Func<Expression, Expression>>();
             registerInfix(TokenTypes.PLUS, parseInfixExpression);
@@ -312,6 +314,82 @@ namespace MonkeyLang.Parser
         private Ast.Expression parseBoolean()
         {
             return new Ast.Boolean() { Token = curToken, Value = curTokenIs(TokenTypes.TRUE) };
+        }
+
+        private Ast.Expression parseGroupedExpression()
+        {
+            nextToken();
+
+            var exp = parseExpression(PrecedenceType.LOWEST);
+
+            if(!expectPeek(TokenTypes.RPAREN))
+            {
+                return null;
+            }
+
+            return exp;
+        }
+
+        private Ast.Expression parseIfExpression()
+        {
+            var expression = new IfExpression()
+            {
+                Token = curToken,
+            };
+
+            if(!expectPeek(TokenTypes.LPAREN))
+            {
+                return null;
+            }
+
+            nextToken();
+            expression.Condition = parseExpression(PrecedenceType.LOWEST);
+
+            if(!expectPeek(TokenTypes.RPAREN))
+            {
+                return null;
+            }
+
+            if(!expectPeek(TokenTypes.LBRACE))
+            {
+                return null;
+            }
+
+            expression.Consequence = parseBlockStatement();
+
+            if(peekTokenIs(TokenTypes.ELSE))
+            {
+                nextToken();
+
+                if(!expectPeek(TokenTypes.LBRACE))
+                {
+                    return null;
+                }
+
+                expression.Alternative = parseBlockStatement();
+            }
+
+            return expression;
+        }
+
+        private Ast.BlockStatement parseBlockStatement()
+        {
+            var block = new Ast.BlockStatement() { Token = curToken };
+            block.Statements = new List<Statement>();
+
+            nextToken();
+
+            while(!curTokenIs(TokenTypes.RBRACE) && !curTokenIs(TokenTypes.EOF))
+            {
+                var stmt = parseStatement();
+                if(stmt != null)
+                {
+                    block.Statements.Add(stmt);
+                }
+                nextToken();
+            }
+
+            return block;
         }
     }
 }

@@ -227,4 +227,58 @@ namespace MonkeyLang.Ast
             return Token.Literal;
         }
     }
+
+    public class IfExpression : Expression
+    {
+        public Token.Token Token;
+        public Expression Condition;
+        public BlockStatement Consequence;
+        public BlockStatement Alternative;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var buf = new Utilities.StringBuffer();
+
+            buf.Write("if");
+            buf.Write(Condition.String());
+            buf.Write(" ");
+            buf.Write(Consequence.String());
+
+            if(Alternative != null)
+            {
+                buf.Write("else ");
+                buf.Write(Alternative.String());
+            }
+
+            return buf.String();
+        }
+    }
+
+    public class BlockStatement : Statement
+    {
+        public Token.Token Token;
+        public List<Statement> Statements;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var buf = new Utilities.StringBuffer();
+
+            foreach(var s in Statements)
+            {
+                buf.Write(s.String());
+            }
+
+            return buf.String();
+        }
+    }
 }

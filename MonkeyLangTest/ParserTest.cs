@@ -220,7 +220,11 @@ return 993322;
         [DataRow("true", "true")]
         [DataRow("false", "false")]
         [DataRow("3 > 5 == false", "((3 > 5) == false)")]
-        [DataRow("3 < 5 == true", "((3 < 5) == true)")]
+        [DataRow("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)")]
+        [DataRow("(5 + 5) * 2", "((5 + 5) * 2)")]
+        [DataRow("2 / (5 + 5)", "(2 / (5 + 5))")]
+        [DataRow("-(5 + 5)", "(-(5 + 5))")]
+        [DataRow("!(true == true)", "(!(true == true))")]
         [DataTestMethod]
         public void TestOperatorPrecedenceParsing(string input, string expected)
         {
@@ -231,6 +235,107 @@ return 993322;
 
             var actual = program.String();
             Assert.AreEqual(actual, expected, string.Format("expected={0}, got={1}", expected, actual));
+        }
+
+        [TestMethod]
+        public void TestIfExpression()
+        {
+            var input = @"if (x < y) { x }";
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1, string.Format(
+                "program.Statements does not contain {0} statements. got={1}", 1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format(
+                "program.Statements[0] is not Ast.ExpressionStatement. got={0}", program.Statements[0].GetType()));
+
+            var exp = (IfExpression)stmt.Expression;
+
+            Assert.IsNotNull(exp, string.Format(
+                "stmt.Expression is not Ast.IfExpression. got={0}", stmt.Expression.GetType()));
+
+            if(!testInfixExpression(exp.Condition, "x", "<", "y"))
+            {
+                return;
+            }
+
+            Assert.AreEqual(exp.Consequence.Statements.Count, 1, string.Format(
+                "consequence is not 1 statements. got={0}", exp.Consequence.Statements.Count));
+
+            var consequence = (ExpressionStatement)exp.Consequence.Statements[0];
+
+            Assert.IsNotNull(consequence, string.Format(
+                "Statements[0] is not Ast.ExpressionStatement. got={0}", exp.Consequence.Statements[0]));
+
+            if(!testIdentifier(consequence.Expression, "x"))
+            {
+                return;
+            }
+
+            Assert.IsNull(exp.Alternative, string.Format(
+                "exp.Alternative.Statements was not null. got={0}", exp.Alternative));
+        }
+
+        [TestMethod]
+        public void TestIfElseExpression()
+        {
+            var input = @"if (x < y) { x } else { y }";
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1, string.Format(
+                "program.Statements does not contain {0} statements. got={1}", 1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format(
+                "program.Statements[0] is not Ast.ExpressionStatement. got={0}", program.Statements[0].GetType()));
+
+            var exp = (IfExpression)stmt.Expression;
+
+            Assert.IsNotNull(exp, string.Format(
+                "stmt.Expression is not Ast.IfExpression. got={0}", stmt.Expression.GetType()));
+
+            if (!testInfixExpression(exp.Condition, "x", "<", "y"))
+            {
+                return;
+            }
+
+            Assert.AreEqual(exp.Consequence.Statements.Count, 1, string.Format(
+                "consequence is not 1 statements. got={0}", exp.Consequence.Statements.Count));
+
+            var consequence = (ExpressionStatement)exp.Consequence.Statements[0];
+
+            Assert.IsNotNull(consequence, string.Format(
+                "Statements[0] is not Ast.ExpressionStatement. got={0}", exp.Consequence.Statements[0]));
+
+            if (!testIdentifier(consequence.Expression, "x"))
+            {
+                return;
+            }
+
+            Assert.AreEqual(exp.Alternative.Statements.Count, 1, string.Format(
+                "alternative is not 1 statements. got={0}", exp.Alternative.Statements.Count));
+
+            var alternative = (ExpressionStatement)exp.Alternative.Statements[0];
+
+            Assert.IsNotNull(alternative, string.Format(
+                "Statements[0] is not Ast.ExpressionStatement. got={0}", exp.Alternative.Statements[0]));
+
+            if (!testIdentifier(alternative.Expression, "y"))
+            {
+                return;
+            }
+
         }
 
         private bool testIdentifier(MonkeyLang.Ast.Expression exp, string value)
