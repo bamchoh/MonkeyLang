@@ -57,6 +57,7 @@ namespace MonkeyLang.Parser
             registerPrefix(TokenTypes.FALSE, parseBoolean);
             registerPrefix(TokenTypes.LPAREN, parseGroupedExpression);
             registerPrefix(TokenTypes.IF, parseIfExpression);
+            registerPrefix(TokenTypes.FUNCTION, parseFunctionLiteral);
 
             infixParseFns = new Dictionary<string, Func<Expression, Expression>>();
             registerInfix(TokenTypes.PLUS, parseInfixExpression);
@@ -390,6 +391,58 @@ namespace MonkeyLang.Parser
             }
 
             return block;
+        }
+
+        private Ast.Expression parseFunctionLiteral()
+        {
+            var lit = new Ast.FunctionLiteral() { Token = curToken };
+
+            if(!expectPeek(TokenTypes.LPAREN))
+            {
+                return null;
+            }
+
+            lit.Parameters = parseFunctionParameters();
+
+            if(!expectPeek(TokenTypes.LBRACE))
+            {
+                return null;
+            }
+
+            lit.Body = parseBlockStatement();
+
+            return lit;
+        }
+
+        private List<Ast.Identifier> parseFunctionParameters()
+        {
+            var identifiers = new List<Ast.Identifier>();
+
+            if(peekTokenIs(TokenTypes.RPAREN))
+            {
+                nextToken();
+                return identifiers;
+            }
+
+            nextToken();
+
+            var ident = new Ast.Identifier() { Token = curToken, Value = curToken.Literal };
+            identifiers.Add(ident);
+
+            while(peekTokenIs(TokenTypes.COMMA))
+            {
+                nextToken();
+                nextToken();
+                var _ident = new Ast.Identifier() { Token = curToken, Value = curToken.Literal };
+                identifiers.Add(_ident);
+            }
+
+            if(!expectPeek(TokenTypes.RPAREN))
+            {
+                return null;
+            }
+
+            return identifiers;
         }
     }
 }

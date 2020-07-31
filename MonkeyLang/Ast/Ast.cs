@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Xml;
 
@@ -277,6 +278,36 @@ namespace MonkeyLang.Ast
             {
                 buf.Write(s.String());
             }
+
+            return buf.String();
+        }
+    }
+
+    public class FunctionLiteral : Expression {
+        public Token.Token Token;
+        public List<Identifier> Parameters;
+        public BlockStatement Body;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var buf = new Utilities.StringBuffer();
+
+            var parameters = new List<string>();
+            foreach(var p in Parameters)
+            {
+                parameters.Add(p.String());
+            }
+
+            buf.Write(TokenLiteral());
+            buf.Write("(");
+            buf.Write(string.Join(", ", parameters));
+            buf.Write(") ");
+            buf.Write(Body.String());
 
             return buf.String();
         }

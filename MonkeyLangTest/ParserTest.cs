@@ -9,6 +9,7 @@ using System.Threading;
 using System;
 using System.Net;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace MonkeyLangTest
 {
@@ -336,6 +337,81 @@ return 993322;
                 return;
             }
 
+        }
+
+        [TestMethod]
+        public void TestFunctionLiteralParsing()
+        {
+            var input = @"fn(x, y) { x + y; }";
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1, string.Format(
+                "program.Statements does not contain {0} statements. got={1}", 1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format(
+                "program.Statements[0] is not Ast.ExpressionStatement. got={0}", program.Statements[0].GetType()));
+
+            var function = (FunctionLiteral)stmt.Expression;
+
+            Assert.IsNotNull(function, string.Format(
+                "stmt.Expression is not Ast.FunctionLiteral. got={0}", stmt.Expression.GetType()));
+
+            Assert.AreEqual(2, function.Parameters.Count, string.Format(
+                "function literal parameters wrong. want 2, got={0}", function.Parameters.Count));
+
+            testLiteralExpression(function.Parameters[0], "x");
+            testLiteralExpression(function.Parameters[1], "y");
+
+            Assert.AreEqual(1, function.Body.Statements.Count, string.Format(
+                "function.Body.Statements has not 1 statements, got={0}", function.Body.Statements.Count));
+
+
+            var bodyStmt = (ExpressionStatement)function.Body.Statements[0];
+
+            Assert.IsNotNull(bodyStmt, string.Format(
+                "function body stmt is not Ast.ExpressionStatement. got={0}", function.Body.Statements[0]));
+
+            testInfixExpression(bodyStmt.Expression, "x", "+", "y");
+        }
+
+        [DataTestMethod]
+        [DataRow("fn() {};", "")]
+        [DataRow("fn(x) {};", "x")]
+        [DataRow("fn(x, y, z) {};", "x,y,z")]
+        public void TestFunctionParameterParsing(string input, string expectedParamsString)
+        {
+            string[] expectedParams;
+            if (string.IsNullOrEmpty(expectedParamsString))
+            {
+                expectedParams = new string[] { };
+            }
+            else
+            {
+                expectedParams = expectedParamsString.Split(',');
+            }
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+            var function = (FunctionLiteral)stmt.Expression;
+
+            Assert.AreEqual(function.Parameters.Count, expectedParams.Length, string.Format(
+                "length parameters wrong. want {0}, got={1}", expectedParams.Length, function.Parameters.Count));
+
+            for(int i=0;i<expectedParams.Length;i++)
+            {
+                var ident = expectedParams[i];
+                testLiteralExpression(function.Parameters[i], ident);
+            }
         }
 
         private bool testIdentifier(MonkeyLang.Ast.Expression exp, string value)
