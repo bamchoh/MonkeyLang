@@ -226,6 +226,9 @@ return 993322;
         [DataRow("2 / (5 + 5)", "(2 / (5 + 5))")]
         [DataRow("-(5 + 5)", "(-(5 + 5))")]
         [DataRow("!(true == true)", "(!(true == true))")]
+        [DataRow("a + add(b * c) + d", "((a + add((b * c))) + d)")]
+        [DataRow("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))")]
+        [DataRow("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")]
         [DataTestMethod]
         public void TestOperatorPrecedenceParsing(string input, string expected)
         {
@@ -412,6 +415,40 @@ return 993322;
                 var ident = expectedParams[i];
                 testLiteralExpression(function.Parameters[i], ident);
             }
+        }
+
+        [TestMethod]
+        public void TestCallExpressionParsing()
+        {
+            var input = @"add(1, 2 * 3, 4 + 5);";
+
+            var l = new Lexer(input);
+            var p = new Parser(l);
+            var program = p.ParserProgram();
+            checkParserErrors(p);
+
+            Assert.AreEqual(program.Statements.Count, 1, string.Format(
+                "program.Statements does not contain {0} statements. got={1}", 1, program.Statements.Count));
+
+            var stmt = (ExpressionStatement)program.Statements[0];
+
+            Assert.IsNotNull(stmt, string.Format(
+                "stmt is not Ast.ExpressionStatement. got={0}", program.Statements[0].GetType()));
+
+            var exp = (CallExpression)stmt.Expression;
+
+            Assert.IsNotNull(exp, string.Format(
+                "stmt.Expression is not Ast.CallExpression. got={0}", stmt.Expression.GetType()));
+
+            if (!testIdentifier(exp.Function, "add"))
+                return;
+
+            Assert.AreEqual(exp.Arguments.Count, 3, string.Format(
+                "wrong length of arguments. got={0}", exp.Arguments.Count));
+
+            testLiteralExpression(exp.Arguments[0], 1);
+            testInfixExpression(exp.Arguments[1], 2, "*", 3);
+            testInfixExpression(exp.Arguments[2], 4, "+", 5);
         }
 
         private bool testIdentifier(MonkeyLang.Ast.Expression exp, string value)

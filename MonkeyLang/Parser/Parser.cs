@@ -39,6 +39,7 @@ namespace MonkeyLang.Parser
             { TokenTypes.MINUS, PrecedenceType.SUM },
             { TokenTypes.SLASH, PrecedenceType.PRODUCT },
             { TokenTypes.ASTERISK, PrecedenceType.PRODUCT },
+            { TokenTypes.LPAREN, PrecedenceType.CALL },
         };
 
         public Parser(Lexer.Lexer l)
@@ -68,6 +69,7 @@ namespace MonkeyLang.Parser
             registerInfix(TokenTypes.NOT_EQ, parseInfixExpression);
             registerInfix(TokenTypes.LT, parseInfixExpression);
             registerInfix(TokenTypes.GT, parseInfixExpression);
+            registerInfix(TokenTypes.LPAREN, parseCallExpression);
         }
 
         public List<string> Errors()
@@ -443,6 +445,41 @@ namespace MonkeyLang.Parser
             }
 
             return identifiers;
+        }
+
+        private Ast.Expression parseCallExpression(Ast.Expression function)
+        {
+            var exp = new Ast.CallExpression() { Token = curToken, Function = function };
+            exp.Arguments = parseCallArguments();
+            return exp;
+        }
+
+        private List<Ast.Expression> parseCallArguments()
+        {
+            var args = new List<Ast.Expression>();
+
+            if(peekTokenIs(TokenTypes.RPAREN))
+            {
+                nextToken();
+                return args;
+            }
+
+            nextToken();
+            args.Add(parseExpression(PrecedenceType.LOWEST));
+
+            while(peekTokenIs(TokenTypes.COMMA))
+            {
+                nextToken();
+                nextToken();
+                args.Add(parseExpression(PrecedenceType.LOWEST));
+            }
+
+            if(!expectPeek(TokenTypes.RPAREN))
+            {
+                return null;
+            }
+
+            return args;
         }
     }
 }

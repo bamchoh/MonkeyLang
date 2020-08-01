@@ -28,7 +28,7 @@ namespace MonkeyLang.Ast
 
         public string TokenLiteral()
         {
-            if(Statements.Count > 0)
+            if (Statements.Count > 0)
             {
                 return Statements[0].TokenLiteral();
             }
@@ -42,7 +42,7 @@ namespace MonkeyLang.Ast
         {
             var buf = new Utilities.StringBuffer();
 
-            foreach(var s in Statements)
+            foreach (var s in Statements)
             {
                 buf.Write(s.String());
             }
@@ -72,7 +72,7 @@ namespace MonkeyLang.Ast
             buf.Write(Name.String());
             buf.Write(" = ");
 
-            if(Value != null)
+            if (Value != null)
             {
                 buf.Write(Value.String());
             }
@@ -115,7 +115,7 @@ namespace MonkeyLang.Ast
 
             buf.Write(TokenLiteral() + " ");
 
-            if(ReturnValue != null)
+            if (ReturnValue != null)
             {
                 buf.Write(ReturnValue.String());
             }
@@ -138,7 +138,7 @@ namespace MonkeyLang.Ast
 
         public string String()
         {
-            if(Expression != null)
+            if (Expression != null)
             {
                 return Expression.String();
             }
@@ -250,7 +250,7 @@ namespace MonkeyLang.Ast
             buf.Write(" ");
             buf.Write(Consequence.String());
 
-            if(Alternative != null)
+            if (Alternative != null)
             {
                 buf.Write("else ");
                 buf.Write(Alternative.String());
@@ -274,7 +274,7 @@ namespace MonkeyLang.Ast
         {
             var buf = new Utilities.StringBuffer();
 
-            foreach(var s in Statements)
+            foreach (var s in Statements)
             {
                 buf.Write(s.String());
             }
@@ -283,7 +283,8 @@ namespace MonkeyLang.Ast
         }
     }
 
-    public class FunctionLiteral : Expression {
+    public class FunctionLiteral : Expression
+    {
         public Token.Token Token;
         public List<Identifier> Parameters;
         public BlockStatement Body;
@@ -298,7 +299,7 @@ namespace MonkeyLang.Ast
             var buf = new Utilities.StringBuffer();
 
             var parameters = new List<string>();
-            foreach(var p in Parameters)
+            foreach (var p in Parameters)
             {
                 parameters.Add(p.String());
             }
@@ -308,6 +309,36 @@ namespace MonkeyLang.Ast
             buf.Write(string.Join(", ", parameters));
             buf.Write(") ");
             buf.Write(Body.String());
+
+            return buf.String();
+        }
+    }
+
+    public class CallExpression : Expression
+    {
+        public Token.Token Token;
+        public Expression Function;
+        public List<Expression> Arguments;
+
+        public string TokenLiteral()
+        {
+            return Token.Literal;
+        }
+
+        public string String()
+        {
+            var buf = new Utilities.StringBuffer();
+
+            var args = new List<string>();
+            foreach(var a in Arguments)
+            {
+                args.Add(a.String());
+            }
+
+            buf.Write(Function.String());
+            buf.Write("(");
+            buf.Write(string.Join(", ", args));
+            buf.Write(")");
 
             return buf.String();
         }
