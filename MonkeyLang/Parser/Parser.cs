@@ -153,7 +153,11 @@ namespace MonkeyLang.Parser
                 return null;
             }
 
-            while(!curTokenIs(TokenTypes.SEMICOLON))
+            nextToken();
+
+            stmt.Value = parseExpression(PrecedenceType.LOWEST);
+
+            if(peekTokenIs(TokenTypes.SEMICOLON))
             {
                 nextToken();
             }
@@ -167,7 +171,9 @@ namespace MonkeyLang.Parser
 
             nextToken();
 
-            while(!curTokenIs(TokenTypes.SEMICOLON))
+            stmt.ReturnValue = parseExpression(PrecedenceType.LOWEST);
+
+            if(peekTokenIs(TokenTypes.SEMICOLON))
             {
                 nextToken();
             }

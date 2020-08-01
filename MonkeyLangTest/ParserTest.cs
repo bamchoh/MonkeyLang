@@ -26,63 +26,64 @@ namespace MonkeyLangTest
             }
         }
 
-        [TestMethod]
-        public void TestLetStatements()
+        [DataRow("let x = 5;", "x", 5)]
+        [DataRow("let y = true;", "y", true)]
+        [DataRow("let foobar = y;", "foobar", "y")]
+        [DataTestMethod]
+        public void TestLetStatements(string input, string expectedIdentifier, object expectedValue)
         {
-            string input = @"
-let x = 5;
-let y = 10;
-let foobar = 838383;
-";
             var l = new Lexer(input);
             var p = new Parser(l);
-
             var program = p.ParserProgram();
-
             checkParserErrors(p);
 
-            Assert.IsNotNull(program, "ParseProgram() returned nil");
+            Assert.AreEqual(program.Statements.Count, 1, string.Format(
+                "program.Statements does not contain 1 statements. got={0}", program.Statements.Count));
 
-            Assert.AreEqual(program.Statements.Count, 3,
-                string.Format("program.Statements does not contain 3 statements. got={0}", program.Statements.Count));
+            var stmt = program.Statements[0];
 
-            var tests = new List<ExpectedTestParameter>()
+            if(!testLetStatement(stmt, expectedIdentifier))
             {
-                new ExpectedTestParameter("x"),
-                new ExpectedTestParameter("y"),
-                new ExpectedTestParameter("foobar"),
-            };
+                return;
+            }
 
-            for(int i = 0;i<tests.Count;i++)
+            var val = ((LetStatement)stmt).Value;
+
+            if (!testLiteralExpression(val, expectedValue))
             {
-                var stmt = program.Statements[i];
-                testLetStatement(stmt, tests[i].ExpectedIdentifier);
+                return;
             }
         }
 
-        [TestMethod]
-        public void TestReturnStatements()
+        [DataRow("return 5;", 5)]
+        [DataRow("return 10;", 10)]
+        [DataRow("return 993322;", 993322)]
+        [DataTestMethod]
+        public void TestReturnStatements(string input, object expectedValue)
         {
-            string input = @"
-return 5;
-return 10;
-return 993322;
-";
             var l = new Lexer(input);
             var p = new Parser(l);
-
             var program = p.ParserProgram();
             checkParserErrors(p);
 
-            Assert.AreEqual(program.Statements.Count, 3,
-                string.Format("program.Statements does not contain 3 statements. got={0}", program.Statements.Count));
+            Assert.AreEqual(program.Statements.Count, 1,
+                string.Format("program.Statements does not contain 1 statements. got={0}", program.Statements.Count));
 
-            foreach(var stmt in program.Statements)
+            var stmt = program.Statements[0];
+
+            var returnStmt = (ReturnStatement)stmt;
+
+            Assert.IsNotNull(returnStmt, string.Format(
+                "stmt not Ast.ReturnStatement. got={0}", stmt.GetType()));
+
+            Assert.AreEqual(returnStmt.TokenLiteral(), "return", string.Format(
+                "returnStmt.TokenLiteral not 'return', got {0}", returnStmt.TokenLiteral()));
+
+            var val = returnStmt.ReturnValue;
+
+            if(!testLiteralExpression(val, expectedValue))
             {
-                var returnStmt = (ReturnStatement)stmt;
-                Assert.IsNotNull(returnStmt, string.Format("stmt not Ast.ReturnStatement. got={0}", stmt));
-                Assert.AreEqual(returnStmt.TokenLiteral(), "return", string.Format("returnStmt.TokenLiteral not 'return', got {0}",
-                    returnStmt.TokenLiteral()));
+                return;
             }
         }
 
@@ -540,7 +541,7 @@ return 993322;
             return true;
         }
 
-        private void testLetStatement(Statement s, string name)
+        private bool testLetStatement(Statement s, string name)
         {
             Assert.AreEqual(s.TokenLiteral(), "let", string.Format("s.TokenLiteral not 'let'. got={0}", s.TokenLiteral()));
 
@@ -548,6 +549,8 @@ return 993322;
             Assert.IsNotNull(letStmt, string.Format("s not Ast.LetStatement. got={0}", s));
             Assert.AreEqual(letStmt.Name.Value, name, string.Format("letStmt.Name.Value not '{0}'. got={1}", name, letStmt.Name.Value));
             Assert.AreEqual(letStmt.Name.TokenLiteral(), name, string.Format("letStmt.Name.TokenLiteral() not '{0}'. got={1}", name, letStmt.Name.TokenLiteral()));
+
+            return true;
         }
 
         private void checkParserErrors(Parser p)
