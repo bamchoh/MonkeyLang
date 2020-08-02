@@ -5,6 +5,7 @@ using System.IO;
 using MonkeyLang.Lexer;
 using MonkeyLang.Token;
 using MonkeyLang.Parser;
+using MonkeyLang.Evaluator;
 
 namespace MonkyLangREPL.Repl
 {
@@ -46,8 +47,12 @@ namespace MonkyLangREPL.Repl
                     continue;
                 }
 
-                tw.Write(program.String());
-                tw.WriteLine();
+                var evaluated = Evaluator.Eval(program);
+                if(evaluated != null)
+                {
+                    tw.Write(evaluated.Inspect());
+                    tw.WriteLine();
+                }
             }
         }
 
