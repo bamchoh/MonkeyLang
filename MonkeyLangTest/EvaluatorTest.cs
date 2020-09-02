@@ -19,7 +19,7 @@ namespace MonkeyLangTest
     [TestClass]
     public class EvaluatorTest
     {
-        [DataRow("5", 6)]
+        [DataRow("5", 5)]
         [DataRow("10", 10)]
         [DataRow("-5", -5)]
         [DataRow("-10", -10)]
